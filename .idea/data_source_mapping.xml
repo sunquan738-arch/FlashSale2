@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourcePerFileMappings">
+    <file url="file://$PROJECT_DIR$/flash-sale-server/src/main/resources/sql/init-data.sql" value="ac484e6c-e8b2-4a1e-8af5-385ba2be08f9" />
+    <file url="file://$PROJECT_DIR$/flash-sale-server/src/main/resources/sql/schema.sql" value="ac484e6c-e8b2-4a1e-8af5-385ba2be08f9" />
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/ac484e6c-e8b2-4a1e-8af5-385ba2be08f9/console.sql" value="ac484e6c-e8b2-4a1e-8af5-385ba2be08f9" />
+  </component>
+</project>

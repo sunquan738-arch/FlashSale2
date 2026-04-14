@@ -1,6 +1,5 @@
 package com.flashsale.server.common.handler;
 
-import com.flashsale.server.common.enums.ResultCode;
 import com.flashsale.server.common.exception.BusinessException;
 import com.flashsale.server.common.result.Result;
 import jakarta.validation.ConstraintViolationException;
@@ -16,11 +15,17 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * 处理业务异常。
+     */
     @ExceptionHandler(BusinessException.class)
     public Result<Void> handleBusinessException(BusinessException e) {
-        return new Result<>(e.getCode(), e.getMessage(), null);
+        return Result.fail(e.getCode(), e.getMessage());
     }
 
+    /**
+     * 处理 @RequestBody 参数校验异常。
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Result<Void> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         String message = e.getBindingResult()
@@ -28,9 +33,12 @@ public class GlobalExceptionHandler {
                 .stream()
                 .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
                 .collect(Collectors.joining("; "));
-        return Result.fail(ResultCode.BAD_REQUEST, message);
+        return Result.fail(400, message);
     }
 
+    /**
+     * 处理表单参数绑定异常。
+     */
     @ExceptionHandler(BindException.class)
     public Result<Void> handleBindException(BindException e) {
         String message = e.getBindingResult()
@@ -43,21 +51,22 @@ public class GlobalExceptionHandler {
                     return Objects.requireNonNullElse(error.getDefaultMessage(), "参数校验失败");
                 })
                 .collect(Collectors.joining("; "));
-        return Result.fail(ResultCode.BAD_REQUEST, message);
+        return Result.fail(400, message);
     }
 
+    /**
+     * 处理路径参数、查询参数校验异常。
+     */
     @ExceptionHandler(ConstraintViolationException.class)
     public Result<Void> handleConstraintViolationException(ConstraintViolationException e) {
-        return Result.fail(ResultCode.BAD_REQUEST, e.getMessage());
+        return Result.fail(400, e.getMessage());
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public Result<Void> handleIllegalArgumentException(IllegalArgumentException e) {
-        return Result.fail(ResultCode.BAD_REQUEST, e.getMessage());
-    }
-
+    /**
+     * 兜底异常处理，避免堆栈信息直接暴露给前端。
+     */
     @ExceptionHandler(Exception.class)
     public Result<Void> handleException(Exception e) {
-        return Result.fail(ResultCode.ERROR, e.getMessage());
+        return Result.fail(500, "系统异常，请稍后重试");
     }
 }

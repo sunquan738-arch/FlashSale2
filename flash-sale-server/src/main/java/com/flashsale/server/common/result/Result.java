@@ -1,6 +1,5 @@
 package com.flashsale.server.common.result;
 
-import com.flashsale.server.common.enums.ResultCode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,22 +14,18 @@ public class Result<T> {
     private T data;
 
     public static <T> Result<T> success() {
-        return new Result<>(ResultCode.SUCCESS.getCode(), ResultCode.SUCCESS.getMessage(), null);
+        return new Result<>(200, "success", null);
     }
 
     public static <T> Result<T> success(T data) {
-        return new Result<>(ResultCode.SUCCESS.getCode(), ResultCode.SUCCESS.getMessage(), data);
+        return new Result<>(200, "success", data);
+    }
+
+    public static <T> Result<T> fail(Integer code, String message) {
+        return new Result<>(code, message, null);
     }
 
     public static <T> Result<T> fail(String message) {
-        return new Result<>(ResultCode.ERROR.getCode(), message, null);
-    }
-
-    public static <T> Result<T> fail(ResultCode resultCode, String message) {
-        return new Result<>(resultCode.getCode(), message, null);
-    }
-
-    public static <T> Result<T> fail(ResultCode resultCode) {
-        return new Result<>(resultCode.getCode(), resultCode.getMessage(), null);
+        return new Result<>(500, message, null);
     }
 }

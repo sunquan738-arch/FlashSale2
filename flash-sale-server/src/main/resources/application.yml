@@ -1,4 +1,4 @@
-﻿server:
+server:
   port: 8080
 
 spring:
@@ -7,31 +7,40 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/flash_sale?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false
-    username: root
-    password: root
+    url: jdbc:mysql://${MYSQL_HOST:192.168.100.130}:${MYSQL_PORT:3306}/${MYSQL_DB:flash_sale}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:123456}
 
   data:
     redis:
-      host: localhost
-      port: 6379
-      password:
-      database: 0
-      timeout: 3000ms
+      host: ${REDIS_HOST:192.168.100.130}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: ${REDIS_TIMEOUT:3000ms}
 
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-    virtual-host: /
+    host: ${RABBITMQ_HOST:192.168.100.130}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:admin}
+    password: ${RABBITMQ_PASSWORD:123456}
+    virtual-host: ${RABBITMQ_VHOST:/}
     publisher-confirm-type: correlated
     publisher-returns: true
     template:
       mandatory: true
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000ms
+          multiplier: 2
+          max-interval: 10000ms
+        default-requeue-rejected: false
 
 mybatis-plus:
-  mapper-locations: classpath:/mapper/**/*.xml
+  mapper-locations: classpath*:/mapper/**/*.xml
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
@@ -39,8 +48,7 @@ mybatis-plus:
     db-config:
       id-type: assign_id
 
-flash:
-  jwt:
-    secret: 12345678901234567890123456789012
-    expire-seconds: 7200
-    issuer: flash-sale-server
+jwt:
+  secret: ${JWT_SECRET:ReplaceWithAtLeast32ByteSecretKey123456}
+  expire-seconds: ${JWT_EXPIRE_SECONDS:7200}
+  issuer: ${JWT_ISSUER:flash-sale-server}
