@@ -1,0 +1,10 @@
+﻿<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="FlashSaleApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <option name="MAIN_CLASS_NAME" value="com.flashsale.server.FlashSaleApplication" />
+    <module name="flash-sale-server" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.flashsale.server.FlashSaleApplication" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
