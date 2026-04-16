@@ -6,15 +6,15 @@
 
     <el-empty v-if="orders.length === 0" description="暂无订单" />
 
-    <div class="order-list">
+    <div class="order-list" v-else>
       <div class="order-item" v-for="item in orders" :key="item.id">
         <div class="left">
-          <div class="no">{{ item.orderNo || `NO.${item.id}` }}</div>
-          <div class="time">{{ item.createTime || "-" }}</div>
+          <div class="no">订单号：{{ item.orderNo || `NO.${item.id}` }}</div>
+          <div class="time">创建时间：{{ formatTime(item.createTime) }}</div>
         </div>
         <div class="right">
           <div class="amount">￥{{ Number(item.totalAmount || 0).toFixed(2) }}</div>
-          <el-tag :type="statusTagType(item.orderStatus)">{{ statusText(item.orderStatus) }}</el-tag>
+          <el-tag :type="statusTagType(item)" effect="dark">{{ statusText(item) }}</el-tag>
         </div>
       </div>
     </div>
@@ -32,29 +32,43 @@ async function loadOrders() {
     const data = await getMyOrdersApi();
     orders.value = Array.isArray(data) ? data : [];
   } catch {
-    // 当前后端未实现该接口时，前端保持空态，不阻断页面展示。
     orders.value = [];
   }
 }
 
-function statusText(status) {
-  const map = {
-    0: "待支付",
-    1: "已支付",
-    2: "已取消",
-    3: "已完成"
-  };
-  return map[status] || "未知状态";
+function statusText(item) {
+  if (item?.resultStatus) {
+    return item.resultStatus;
+  }
+  if (item?.orderStatus === 0) {
+    return "进行中";
+  }
+  if (item?.orderStatus === 1 || item?.orderStatus === 3) {
+    return "成功";
+  }
+  return "失败";
 }
 
-function statusTagType(status) {
-  const map = {
-    0: "warning",
-    1: "success",
-    2: "info",
-    3: ""
-  };
-  return map[status] || "info";
+function statusTagType(item) {
+  const text = statusText(item);
+  if (text === "进行中") {
+    return "warning";
+  }
+  if (text === "成功") {
+    return "success";
+  }
+  return "danger";
+}
+
+function formatTime(value) {
+  if (!value) {
+    return "-";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return date.toLocaleString();
 }
 
 onMounted(loadOrders);
@@ -63,37 +77,59 @@ onMounted(loadOrders);
 <style scoped>
 .order-list {
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
 .order-item {
-  padding: 16px;
-  border-radius: 14px;
+  padding: 18px;
+  border-radius: 16px;
   background: #fff;
   box-shadow: var(--card-shadow);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border: 1px solid rgba(255, 68, 0, 0.08);
+}
+
+.left {
+  min-width: 0;
 }
 
 .no {
   font-weight: 700;
+  font-size: 16px;
 }
 
 .time {
-  margin-top: 6px;
+  margin-top: 8px;
   font-size: 13px;
   color: #888;
 }
 
 .right {
   text-align: right;
+  display: grid;
+  gap: 10px;
+  justify-items: end;
 }
 
 .amount {
-  margin-bottom: 8px;
   color: #ff4400;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .order-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .right {
+    width: 100%;
+    justify-items: start;
+    text-align: left;
+  }
 }
 </style>

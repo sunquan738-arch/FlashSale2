@@ -11,3 +11,21 @@
 .idea/
 target/
 *.iml
+# Java
+target/
+*.class
+
+# Frontend
+node_modules/
+dist/
+
+# IDE
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

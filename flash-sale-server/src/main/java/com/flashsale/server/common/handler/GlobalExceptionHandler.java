@@ -1,8 +1,10 @@
 package com.flashsale.server.common.handler;
 
-import com.flashsale.server.common.exception.BusinessException;
+import com.flashsale.server.common.exception.BizException;
 import com.flashsale.server.common.result.Result;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -16,31 +18,32 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     /**
-     * 处理业务异常。
+     * 业务异常：由业务代码主动抛出，返回明确业务码与提示信息。
      */
-    @ExceptionHandler(BusinessException.class)
-    public Result<Void> handleBusinessException(BusinessException e) {
-        return Result.fail(e.getCode(), e.getMessage());
+    @ExceptionHandler(BizException.class)
+    public ResponseEntity<Result<Void>> handleBizException(BizException e) {
+        int status = Objects.requireNonNullElse(e.getCode(), 500);
+        return ResponseEntity.status(status).body(Result.fail(status, e.getMessage()));
     }
 
     /**
-     * 处理 @RequestBody 参数校验异常。
+     * @RequestBody 参数校验失败。
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public Result<Void> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    public ResponseEntity<Result<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         String message = e.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
                 .collect(Collectors.joining("; "));
-        return Result.fail(400, message);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Result.fail(400, message));
     }
 
     /**
-     * 处理表单参数绑定异常。
+     * 表单参数绑定失败。
      */
     @ExceptionHandler(BindException.class)
-    public Result<Void> handleBindException(BindException e) {
+    public ResponseEntity<Result<Void>> handleBindException(BindException e) {
         String message = e.getBindingResult()
                 .getAllErrors()
                 .stream()
@@ -51,22 +54,23 @@ public class GlobalExceptionHandler {
                     return Objects.requireNonNullElse(error.getDefaultMessage(), "参数校验失败");
                 })
                 .collect(Collectors.joining("; "));
-        return Result.fail(400, message);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Result.fail(400, message));
     }
 
     /**
-     * 处理路径参数、查询参数校验异常。
+     * 路径参数、查询参数校验失败。
      */
     @ExceptionHandler(ConstraintViolationException.class)
-    public Result<Void> handleConstraintViolationException(ConstraintViolationException e) {
-        return Result.fail(400, e.getMessage());
+    public ResponseEntity<Result<Void>> handleConstraintViolationException(ConstraintViolationException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Result.fail(400, e.getMessage()));
     }
 
     /**
-     * 兜底异常处理，避免堆栈信息直接暴露给前端。
+     * 系统异常：统一屏蔽堆栈细节，避免敏感信息泄露。
      */
     @ExceptionHandler(Exception.class)
-    public Result<Void> handleException(Exception e) {
-        return Result.fail(500, "系统异常，请稍后重试");
+    public ResponseEntity<Result<Void>> handleException(Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Result.fail(500, "system error, please retry later"));
     }
 }

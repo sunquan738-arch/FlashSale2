@@ -16,7 +16,7 @@
         </div>
       </div>
 
-      <StockProgress :stock="activeActivity?.seckillStock || product.stock" :total="Math.max(product.stock, 100)" />
+      <StockProgress :stock="activeActivity?.seckillStock ?? product.stock" :total="Math.max(product.stock || 0, 100)" />
 
       <div class="countdown-row" v-if="activeActivity">
         <span>{{ activeActivity.activityStatus === "未开始" ? "活动倒计时" : "结束倒计时" }}</span>
@@ -30,7 +30,7 @@
         <el-button
           type="primary"
           size="large"
-          :disabled="!activeActivity || activeActivity.activityStatus !== '进行中'"
+          :disabled="!activeActivity || activeActivity.activityStatus !== '进行中' || seckillLoading"
           :loading="seckillLoading"
           @click="onSeckill"
         >
@@ -38,14 +38,14 @@
         </el-button>
       </div>
 
-      <p class="tips">提示：点击秒杀后请在页面轮询结果，系统会异步创建订单。</p>
+      <p class="tips">点击秒杀后系统会异步创建订单，请耐心等待结果。</p>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { useRoute, useRouter } from "vue-router";
 import { getProductDetailApi } from "../api/product";
 import { doSeckillApi, getSeckillActivitiesApi, querySeckillResultApi } from "../api/seckill";
@@ -60,6 +60,9 @@ const activities = ref([]);
 const seckillLoading = ref(false);
 let pollTimer = null;
 
+const MAX_POLL_TIMES = 10;
+const POLL_INTERVAL = 1500;
+
 const activeActivity = computed(() => {
   return activities.value.find((a) => Number(a.productId) === Number(route.params.id)) || null;
 });
@@ -70,10 +73,15 @@ async function loadData() {
 }
 
 async function onSeckill() {
+  if (seckillLoading.value) {
+    return;
+  }
+
   if (!localStorage.getItem("token")) {
     router.push(`/login?redirect=${encodeURIComponent(route.fullPath)}`);
     return;
   }
+
   if (!activeActivity.value) {
     ElMessage.warning("该商品暂无秒杀活动");
     return;
@@ -81,32 +89,66 @@ async function onSeckill() {
 
   seckillLoading.value = true;
   try {
-    const msg = await doSeckillApi(activeActivity.value.id);
-    ElMessage.success(msg || "抢购请求已提交，请稍候查询结果");
-    startPolling();
+    await doSeckillApi(activeActivity.value.id);
+    ElMessage.success("抢购请求已提交，请稍候查询结果");
+    startPolling(activeActivity.value.id);
+  } catch (error) {
+    ElMessage.error(error?.message || "提交秒杀请求失败");
   } finally {
     seckillLoading.value = false;
   }
 }
 
-function startPolling() {
-  clearInterval(pollTimer);
-  pollTimer = setInterval(async () => {
-    const res = await querySeckillResultApi(activeActivity.value.id);
-    if (res.status === "抢购成功") {
-      clearInterval(pollTimer);
-      ElMessage.success(`抢购成功，订单号：${res.orderNo}`);
-      router.push("/my-orders");
+function stopPolling() {
+  if (pollTimer) {
+    clearTimeout(pollTimer);
+    pollTimer = null;
+  }
+}
+
+function startPolling(activityId) {
+  stopPolling();
+  let count = 0;
+
+  const poll = async () => {
+    count += 1;
+    try {
+      const res = await querySeckillResultApi(activityId);
+
+      if (res.status === "抢购成功") {
+        stopPolling();
+        await ElMessageBox.alert(`订单号：${res.orderNo || "已生成"}`, "抢购成功", {
+          type: "success",
+          confirmButtonText: "查看我的订单"
+        });
+        router.push("/my-orders");
+        return;
+      }
+
+      if (res.status === "抢购失败") {
+        stopPolling();
+        ElMessage.error("抢购失败，活动已结束或库存不足");
+        return;
+      }
+
+      if (count >= MAX_POLL_TIMES) {
+        stopPolling();
+        ElMessage.warning("当前排队人数较多，请稍后在“我的订单”页查看结果");
+        return;
+      }
+
+      pollTimer = setTimeout(poll, POLL_INTERVAL);
+    } catch (error) {
+      stopPolling();
+      ElMessage.error(error?.message || "查询秒杀结果失败");
     }
-    if (res.status === "抢购失败") {
-      clearInterval(pollTimer);
-      ElMessage.error("抢购失败");
-    }
-  }, 1500);
+  };
+
+  pollTimer = setTimeout(poll, POLL_INTERVAL);
 }
 
 onMounted(loadData);
-onBeforeUnmount(() => clearInterval(pollTimer));
+onBeforeUnmount(stopPolling);
 </script>
 
 <style scoped>

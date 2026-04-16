@@ -21,8 +21,11 @@ request.interceptors.response.use(
       if (payload.code === 200) {
         return payload.data;
       }
-      ElMessage.error(payload.message || "请求失败");
-      return Promise.reject(new Error(payload.message || "请求失败"));
+      const message = payload.message || "请求失败";
+      ElMessage.error(message);
+      const error = new Error(message);
+      error.code = payload.code;
+      return Promise.reject(error);
     }
     return payload;
   },

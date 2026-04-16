@@ -52,3 +52,8 @@ jwt:
   secret: ${JWT_SECRET:ReplaceWithAtLeast32ByteSecretKey123456}
   expire-seconds: ${JWT_EXPIRE_SECONDS:7200}
   issuer: ${JWT_ISSUER:flash-sale-server}
+
+app:
+  rate-limit:
+    count: ${RATE_LIMIT_COUNT:5000000}
+    window-seconds: ${RATE_LIMIT_WINDOW_SECONDS:10}

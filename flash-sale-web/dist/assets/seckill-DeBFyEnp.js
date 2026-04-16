@@ -1,1 +1,0 @@
-import{q as t}from"./index-DLPjye1v.js";function l(){return t({url:"/seckill/activities",method:"get"})}function r(e){return t({url:`/seckill/do/${e}`,method:"post"})}function s(e){return t({url:`/seckill/result/${e}`,method:"get"})}export{r as d,l as g,s as q};

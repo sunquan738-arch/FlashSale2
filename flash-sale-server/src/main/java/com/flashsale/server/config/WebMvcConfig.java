@@ -10,6 +10,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final JwtAuthInterceptor jwtAuthInterceptor;
+    private final RateLimitInterceptor rateLimitInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -22,5 +23,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/seckill/activities",
                         "/api/seckill/activities/*"
                 );
+
+        registry.addInterceptor(rateLimitInterceptor)
+                .addPathPatterns("/api/**");
     }
 }
