@@ -1,0 +1,11 @@
+com\flashsale\gateway\support\GatewayException.class
+com\flashsale\gateway\config\GatewaySecurityProperties.class
+com\flashsale\gateway\filter\GatewayAccessLogFilter.class
+com\flashsale\gateway\filter\TraceIdGlobalFilter.class
+com\flashsale\gateway\config\GatewaySentinelRuleProperties$RouteRule.class
+com\flashsale\gateway\config\GatewaySentinelRuleProperties.class
+com\flashsale\gateway\config\SentinelGatewayConfig.class
+com\flashsale\gateway\GatewayApplication.class
+com\flashsale\gateway\filter\ActivityIdExtractFilter.class
+com\flashsale\gateway\support\GatewayGlobalErrorHandler.class
+com\flashsale\gateway\filter\JwtAuthGlobalFilter.class

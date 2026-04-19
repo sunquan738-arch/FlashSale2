@@ -2,6 +2,7 @@ package com.flashsale.server.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flashsale.server.common.result.Result;
+import com.flashsale.server.config.properties.FeatureSwitchProperties;
 import com.flashsale.server.utils.JwtUtils;
 import com.flashsale.server.utils.UserContext;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,18 +20,33 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
 
     private final JwtUtils jwtUtils;
     private final ObjectMapper objectMapper;
+    private final FeatureSwitchProperties featureSwitchProperties;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        if (featureSwitchProperties.isGatewayJwtEnabled()) {
+            String gatewayVerified = request.getHeader("X-Gateway-Verified");
+            String userIdHeader = request.getHeader("X-Auth-UserId");
+            if ("true".equalsIgnoreCase(gatewayVerified) && userIdHeader != null && !userIdHeader.isBlank()) {
+                try {
+                    UserContext.setUserId(Long.parseLong(userIdHeader));
+                    return true;
+                } catch (NumberFormatException ignored) {
+                    writeUnauthorized(response, "unauthorized");
+                    return false;
+                }
+            }
+        }
+
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            writeUnauthorized(response, "missing token");
+            writeUnauthorized(response, "unauthorized");
             return false;
         }
 
         String token = authHeader.substring(7);
         if (!jwtUtils.validateToken(token)) {
-            writeUnauthorized(response, "invalid or expired token");
+            writeUnauthorized(response, "unauthorized");
             return false;
         }
 

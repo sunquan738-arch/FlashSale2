@@ -1,0 +1,51 @@
+﻿# Nacos dataId: flash-sale-server.yaml
+# group: DEFAULT_GROUP
+
+app:
+  feature:
+    seckill-enabled: true
+    gateway-jwt-enabled: false
+    sentinel-enabled: true
+
+  redis:
+    env-prefix: prod
+    use-new-key: true
+    double-write-legacy: true
+    read-legacy-fallback: true
+
+  rate-limit:
+    enabled: true
+    default-rule:
+      window-seconds: 10
+      endpoint-count: 300
+      ip-count: 200
+      user-count: 120
+      activity-count: 0
+    query-rule:
+      window-seconds: 10
+      endpoint-count: 800
+      ip-count: 500
+      user-count: 300
+      activity-count: 0
+    seckill-rule:
+      window-seconds: 10
+      endpoint-count: 120
+      ip-count: 60
+      user-count: 20
+      activity-count: 80
+
+  rabbitmq:
+    consumer:
+      concurrent-consumers: 4
+      max-concurrent-consumers: 16
+      prefetch: 50
+      max-retries: 3
+      retry-delay-ms: 3000
+
+  sentinel:
+    seckill-hot-activity-qps: 80
+    seckill-hot-activity-window-sec: 1
+    order-write-flow-qps: 120
+    order-write-degrade-rt-ms: 200
+    order-write-degrade-window-sec: 10
+    order-write-min-request-amount: 20

@@ -1,0 +1,93 @@
+﻿server:
+  port: ${GATEWAY_PORT:8090}
+
+spring:
+  application:
+    name: gateway-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  cloud:
+    nacos:
+      discovery:
+        enabled: ${NACOS_DISCOVERY_ENABLED:false}
+      config:
+        enabled: ${NACOS_CONFIG_ENABLED:false}
+
+    sentinel:
+      enabled: ${SENTINEL_ENABLED:true}
+      eager: true
+      transport:
+        dashboard: ${SENTINEL_DASHBOARD:192.168.100.130:8858}
+        port: ${SENTINEL_TRANSPORT_PORT:8719}
+
+    gateway:
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 10s
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            exposedHeaders: "X-Trace-Id"
+            allowCredentials: false
+            maxAge: 3600
+      routes:
+        - id: route-auth
+          uri: ${GATEWAY_ROUTE_URI:http://127.0.0.1:8080}
+          predicates:
+            - Path=/api/auth/**
+        - id: route-products
+          uri: ${GATEWAY_ROUTE_URI:http://127.0.0.1:8080}
+          predicates:
+            - Path=/api/products/**
+        - id: route-seckill
+          uri: ${GATEWAY_ROUTE_URI:http://127.0.0.1:8080}
+          predicates:
+            - Path=/api/seckill/**
+        - id: route-orders
+          uri: ${GATEWAY_ROUTE_URI:http://127.0.0.1:8080}
+          predicates:
+            - Path=/api/orders/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+jwt:
+  secret: ${JWT_SECRET:ReplaceWithAtLeast32ByteSecretKey123456}
+
+app:
+  gateway:
+    ignore-auth-paths:
+      - /api/auth/login
+      - /api/products
+      - /api/products/**
+      - /api/seckill/activities
+      - /api/seckill/activities/**
+      - /actuator/**
+    trace-header: X-Trace-Id
+    sentinel:
+      route-rules:
+        - route-id: route-auth
+          count: 500
+          interval-sec: 1
+          burst: 100
+        - route-id: route-products
+          count: 800
+          interval-sec: 1
+          burst: 200
+        - route-id: route-seckill
+          count: 200
+          interval-sec: 1
+          burst: 50
+        - route-id: route-orders
+          count: 200
+          interval-sec: 1
+          burst: 30

@@ -1,0 +1,9 @@
+﻿# 当前本地联调默认：Gateway 运行在宿主机，后端服务运行在宿主机。
+# 生产/灰度可通过环境变量 GATEWAY_ROUTE_URI=lb://flash-sale-server 切到注册发现。
+spring:
+  cloud:
+    nacos:
+      discovery:
+        enabled: ${NACOS_DISCOVERY_ENABLED:false}
+      config:
+        enabled: ${NACOS_CONFIG_ENABLED:false}

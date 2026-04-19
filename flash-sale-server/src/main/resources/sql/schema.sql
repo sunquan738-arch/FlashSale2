@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS `seckill_order`;
 DROP TABLE IF EXISTS `orders`;
+DROP TABLE IF EXISTS `mq_outbox_event`;
 DROP TABLE IF EXISTS `seckill_activity`;
 DROP TABLE IF EXISTS `product`;
 DROP TABLE IF EXISTS `user`;
@@ -85,5 +86,24 @@ CREATE TABLE `seckill_order` (
   CONSTRAINT `fk_seckill_activity` FOREIGN KEY (`activity_id`) REFERENCES `seckill_activity` (`id`),
   CONSTRAINT `fk_seckill_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='秒杀订单表';
+
+CREATE TABLE `mq_outbox_event` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `event_id` VARCHAR(64) NOT NULL COMMENT '事件唯一ID',
+  `event_type` VARCHAR(64) NOT NULL COMMENT '事件类型',
+  `biz_key` VARCHAR(128) NOT NULL COMMENT '业务键',
+  `payload` TEXT NOT NULL COMMENT '事件载荷',
+  `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态: 0-NEW,1-SENT,2-DEAD',
+  `retry_count` INT NOT NULL DEFAULT 0 COMMENT '已重试次数',
+  `max_retry` INT NOT NULL DEFAULT 6 COMMENT '最大重试次数',
+  `next_retry_time` DATETIME(3) NOT NULL COMMENT '下次重试时间',
+  `last_error` VARCHAR(1024) DEFAULT NULL COMMENT '最后一次错误',
+  `create_time` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+  `update_time` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_outbox_event_id` (`event_id`),
+  KEY `idx_outbox_status_retry` (`status`, `next_retry_time`),
+  KEY `idx_outbox_biz_key` (`biz_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='MQ可靠消息外发事件表';
 
 SET FOREIGN_KEY_CHECKS = 1;

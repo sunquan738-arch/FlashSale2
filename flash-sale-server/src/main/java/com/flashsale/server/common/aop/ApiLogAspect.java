@@ -14,6 +14,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Arrays;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -22,9 +23,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ApiLogAspect {
 
+    private static final Pattern SENSITIVE_PATTERN = Pattern.compile("(?i)(\\\"(?:password|token|authorization|phone)\\\"\\s*:\\s*\\\")(.*?)(\\\")");
+
     private final ObjectMapper objectMapper;
 
-    @Around("execution(* com.flashsale.server.controller..*(..))")
+    @Around("execution(* com.flashsale.server.interfaces.rest..*(..))")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.currentTimeMillis();
         String methodName = joinPoint.getSignature().toShortString();
@@ -40,7 +43,7 @@ public class ApiLogAspect {
         } catch (Throwable ex) {
             long cost = System.currentTimeMillis() - start;
             log.error("API ERR | uri={} | method={} | cost={}ms | args={} | ex={}",
-                    uri, methodName, cost, args, ex.getMessage(), ex);
+                    uri, methodName, cost, args, ex.getMessage());
             throw ex;
         }
     }
@@ -68,7 +71,8 @@ public class ApiLogAspect {
         }
         try {
             String json = objectMapper.writeValueAsString(value);
-            return json.length() > 2000 ? json.substring(0, 2000) + "...(truncated)" : json;
+            String masked = SENSITIVE_PATTERN.matcher(json).replaceAll("$1***$3");
+            return masked.length() > 2000 ? masked.substring(0, 2000) + "...(truncated)" : masked;
         } catch (JsonProcessingException e) {
             return String.valueOf(value);
         }

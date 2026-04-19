@@ -26,9 +26,7 @@ public class SeckillScript {
      * 执行秒杀 Lua 脚本（原子操作）：
      * 0=成功，1=已抢购，2=库存不足。
      */
-    public long execute(Long activityId, Long userId) {
-        String stockKey = "seckill:stock:" + activityId;
-        String orderUserSetKey = "seckill:ordered:" + activityId;
+    public long execute(String stockKey, String orderUserSetKey, Long userId) {
         Long result = stringRedisTemplate.execute(
                 SECKILL_LUA_SCRIPT,
                 List.of(stockKey, orderUserSetKey),

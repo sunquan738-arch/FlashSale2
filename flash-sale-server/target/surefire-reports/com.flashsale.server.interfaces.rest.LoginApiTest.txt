@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.flashsale.server.interfaces.rest.LoginApiTest
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.471 s -- in com.flashsale.server.interfaces.rest.LoginApiTest

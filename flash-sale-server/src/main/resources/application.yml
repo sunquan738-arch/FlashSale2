@@ -1,10 +1,13 @@
-server:
+﻿server:
   port: 8080
 
 spring:
   application:
     name: flash-sale-server
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
 
+  # 当前可运行环境默认值：宿主机应用 -> 虚拟机中间件映射端口（可被 application-dev.yml 和环境变量覆盖）
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${MYSQL_HOST:192.168.100.130}:${MYSQL_PORT:3306}/${MYSQL_DB:flash_sale}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
@@ -31,13 +34,31 @@ spring:
       mandatory: true
     listener:
       simple:
-        retry:
-          enabled: true
-          max-attempts: 3
-          initial-interval: 1000ms
-          multiplier: 2
-          max-interval: 10000ms
+        acknowledge-mode: manual
         default-requeue-rejected: false
+
+  # 未来容器化可选方案：见 application-container.yml.example（容器名互联）
+  cloud:
+    nacos:
+      discovery:
+        enabled: ${NACOS_DISCOVERY_ENABLED:false}
+      config:
+        enabled: ${NACOS_CONFIG_ENABLED:false}
+    sentinel:
+      enabled: ${SENTINEL_ENABLED:true}
+      eager: true
+      transport:
+        dashboard: ${SENTINEL_DASHBOARD:192.168.100.130:8858}
+        port: ${SENTINEL_TRANSPORT_PORT:8719}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
 
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
@@ -54,6 +75,80 @@ jwt:
   issuer: ${JWT_ISSUER:flash-sale-server}
 
 app:
+  feature:
+    seckill-enabled: ${APP_FEATURE_SECKILL_ENABLED:true}
+    gateway-jwt-enabled: ${APP_FEATURE_GATEWAY_JWT_ENABLED:false}
+    sentinel-enabled: ${APP_FEATURE_SENTINEL_ENABLED:true}
+
+  redis:
+    env-prefix: ${APP_ENV_PREFIX:${spring.profiles.active}}
+    use-new-key: ${APP_REDIS_USE_NEW_KEY:true}
+    double-write-legacy: ${APP_REDIS_DOUBLE_WRITE_LEGACY:true}
+    read-legacy-fallback: ${APP_REDIS_READ_LEGACY_FALLBACK:true}
+    cache:
+      activity-ttl-seconds: ${APP_CACHE_ACTIVITY_TTL:300}
+      product-ttl-seconds: ${APP_CACHE_PRODUCT_TTL:600}
+      list-ttl-seconds: ${APP_CACHE_LIST_TTL:120}
+      result-ttl-seconds: ${APP_CACHE_RESULT_TTL:1800}
+      ordered-set-ttl-seconds: ${APP_CACHE_ORDERED_SET_TTL:172800}
+      stock-ttl-buffer-seconds: ${APP_CACHE_STOCK_BUFFER_TTL:86400}
+      local-cache-ttl-seconds: ${APP_CACHE_LOCAL_TTL:30}
+      local-cache-max-size: ${APP_CACHE_LOCAL_MAX_SIZE:10000}
+
   rate-limit:
-    count: ${RATE_LIMIT_COUNT:5000000}
-    window-seconds: ${RATE_LIMIT_WINDOW_SECONDS:10}
+    enabled: ${APP_RATE_LIMIT_ENABLED:true}
+    default-rule:
+      window-seconds: ${APP_RATE_LIMIT_DEFAULT_WINDOW:10}
+      endpoint-count: ${APP_RATE_LIMIT_DEFAULT_ENDPOINT:300}
+      ip-count: ${APP_RATE_LIMIT_DEFAULT_IP:200}
+      user-count: ${APP_RATE_LIMIT_DEFAULT_USER:120}
+      activity-count: 0
+    query-rule:
+      window-seconds: ${APP_RATE_LIMIT_QUERY_WINDOW:10}
+      endpoint-count: ${APP_RATE_LIMIT_QUERY_ENDPOINT:800}
+      ip-count: ${APP_RATE_LIMIT_QUERY_IP:500}
+      user-count: ${APP_RATE_LIMIT_QUERY_USER:300}
+      activity-count: 0
+    seckill-rule:
+      window-seconds: ${APP_RATE_LIMIT_SECKILL_WINDOW:10}
+      endpoint-count: ${APP_RATE_LIMIT_SECKILL_ENDPOINT:120}
+      ip-count: ${APP_RATE_LIMIT_SECKILL_IP:60}
+      user-count: ${APP_RATE_LIMIT_SECKILL_USER:20}
+      activity-count: ${APP_RATE_LIMIT_SECKILL_ACTIVITY:80}
+
+  seckill:
+    preload:
+      enabled: ${APP_SECKILL_PRELOAD_ENABLED:true}
+      fixed-delay-ms: ${APP_SECKILL_PRELOAD_DELAY_MS:60000}
+      look-ahead-minutes: ${APP_SECKILL_PRELOAD_LOOK_AHEAD_MINUTES:120}
+      look-back-minutes: ${APP_SECKILL_PRELOAD_LOOK_BACK_MINUTES:30}
+
+  rabbitmq:
+    consumer:
+      concurrent-consumers: ${APP_RABBIT_CONCURRENT_CONSUMERS:4}
+      max-concurrent-consumers: ${APP_RABBIT_MAX_CONCURRENT_CONSUMERS:16}
+      prefetch: ${APP_RABBIT_PREFETCH:50}
+      max-retries: ${APP_RABBIT_MAX_RETRIES:3}
+      retry-delay-ms: ${APP_RABBIT_RETRY_DELAY_MS:3000}
+    publisher:
+      confirm-timeout-ms: ${APP_RABBIT_CONFIRM_TIMEOUT_MS:3000}
+
+  outbox:
+    enabled: ${APP_OUTBOX_ENABLED:true}
+    batch-size: ${APP_OUTBOX_BATCH_SIZE:100}
+    dispatch-interval-ms: ${APP_OUTBOX_DISPATCH_INTERVAL_MS:2000}
+    max-retries: ${APP_OUTBOX_MAX_RETRIES:6}
+    retry-base-delay-ms: ${APP_OUTBOX_RETRY_BASE_DELAY_MS:2000}
+
+  security:
+    password:
+      allow-plain-compat: ${APP_SECURITY_PASSWORD_ALLOW_PLAIN_COMPAT:true}
+      auto-upgrade-on-login: ${APP_SECURITY_PASSWORD_AUTO_UPGRADE:false}
+
+  sentinel:
+    seckill-hot-activity-qps: ${APP_SENTINEL_SECKILL_HOT_ACTIVITY_QPS:80}
+    seckill-hot-activity-window-sec: ${APP_SENTINEL_SECKILL_HOT_ACTIVITY_WINDOW_SEC:1}
+    order-write-flow-qps: ${APP_SENTINEL_ORDER_WRITE_FLOW_QPS:120}
+    order-write-degrade-rt-ms: ${APP_SENTINEL_ORDER_WRITE_DEGRADE_RT_MS:200}
+    order-write-degrade-window-sec: ${APP_SENTINEL_ORDER_WRITE_DEGRADE_WINDOW_SEC:10}
+    order-write-min-request-amount: ${APP_SENTINEL_ORDER_WRITE_MIN_REQUEST_AMOUNT:20}

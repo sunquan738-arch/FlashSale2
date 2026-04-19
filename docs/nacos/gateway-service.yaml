@@ -1,0 +1,44 @@
+﻿# Nacos dataId: gateway-service.yaml
+# group: DEFAULT_GROUP
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: route-auth
+          uri: lb://flash-sale-server
+          predicates:
+            - Path=/api/auth/**
+        - id: route-products
+          uri: lb://flash-sale-server
+          predicates:
+            - Path=/api/products/**
+        - id: route-seckill
+          uri: lb://flash-sale-server
+          predicates:
+            - Path=/api/seckill/**
+        - id: route-orders
+          uri: lb://flash-sale-server
+          predicates:
+            - Path=/api/orders/**
+
+app:
+  gateway:
+    sentinel:
+      route-rules:
+        - route-id: route-auth
+          count: 500
+          interval-sec: 1
+          burst: 100
+        - route-id: route-products
+          count: 800
+          interval-sec: 1
+          burst: 200
+        - route-id: route-seckill
+          count: 200
+          interval-sec: 1
+          burst: 50
+        - route-id: route-orders
+          count: 200
+          interval-sec: 1
+          burst: 30

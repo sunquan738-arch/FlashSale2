@@ -1,0 +1,5 @@
+com\flashsale\server\seckill\SeckillMqConsumerIdempotentTest.class
+com\flashsale\server\application\seckill\SeckillApplicationServiceTest.class
+com\flashsale\server\interfaces\rest\LoginApiTest$LoginPayload.class
+com\flashsale\server\interfaces\rest\LoginApiTest.class
+com\flashsale\server\interfaces\rest\ProductQueryApiTest.class

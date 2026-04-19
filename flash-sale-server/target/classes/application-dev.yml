@@ -1,0 +1,30 @@
+﻿# 当前可运行环境（宿主机应用 -> 虚拟机 Docker 容器映射端口）
+# 如需覆盖，请通过环境变量注入。
+spring:
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:192.168.100.130}:${MYSQL_PORT:3306}/${MYSQL_DB:flash_sale}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:123456}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:192.168.100.130}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:192.168.100.130}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:admin}
+    password: ${RABBITMQ_PASSWORD:123456}
+    virtual-host: ${RABBITMQ_VHOST:/}
+
+app:
+  redis:
+    env-prefix: ${APP_ENV_PREFIX:dev}
+
+  security:
+    password:
+      allow-plain-compat: ${APP_SECURITY_PASSWORD_ALLOW_PLAIN_COMPAT:true}
+      auto-upgrade-on-login: ${APP_SECURITY_PASSWORD_AUTO_UPGRADE:false}
